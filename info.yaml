@@ -1,0 +1,41 @@
+project:
+  title: "16-Bit MAC Unit for ML Acceleration"
+  author: "Tyrone Iras Marhguy"
+  description: "BFloat16 (BF16) Multiply-Accumulate Unit with FP32 Accumulator"
+  language: "Verilog"
+  clock_hz: 50000000
+
+documentation:
+  author: "Tyrone Iras Marhguy"
+  title: "BF16 MAC Unit"
+  description: |
+    16-bit BFloat16 Multiply-Accumulate unit for ML acceleration.
+    Performs BF16 * BF16 -> FP32 Accumulation.
+    Uses 4-cycle streaming interface to multiplex 16-bit inputs/32-bit outputs.
+  
+  how_it_works: |
+    Protocol:
+    Cycle 0: Load A[7:0]
+    Cycle 1: Load A[15:8]
+    Cycle 2: Load B[7:0]
+    Cycle 3: Load B[15:8] -> Computes Logic
+    
+    Output:
+    Cycles 0-1: Result[15:0] (FP32 Lower)
+    Cycles 2-3: Result[31:16] (FP32 Upper)
+  
+  how_to_test: |
+    1. Reset (rst_n=0)
+    2. Stream inputs (A_low, A_high, B_low, B_high)
+    3. Read outputs continuously on uo_out/uio_out
+  
+  language: "Verilog"
+
+pinout:
+  ui_in: "Data Stream Input (8-bit)"
+  uio_in: "Unused"
+  uo_out: "Result Output [7:0] (Multiplexed)"
+  uio_out: "Result Output [15:8] (Multiplexed)"
+  ena: "Enable"
+  clk: "Clock"
+  rst_n: "Reset"
