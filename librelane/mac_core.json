@@ -1,0 +1,29 @@
+{
+  "DESIGN_NAME": "mac_core",
+  "VERILOG_FILES": "dir::../src/mac_core.sv",
+
+  "CLOCK_PORT": "clk",
+  "CLOCK_PERIOD": 20,
+
+  "FP_SIZING": "relative",
+  "FP_CORE_UTIL": 40,
+  "PL_TARGET_DENSITY": 0.45,
+
+  "DESIGN_IS_CORE": false,
+  "RUN_KLAYOUT_XOR": false,
+  "RUN_KLAYOUT_DRC": false,
+
+  "TOP_MARGIN_MULT": 2,
+  "BOTTOM_MARGIN_MULT": 2,
+  "LEFT_MARGIN_MULT": 2,
+  "RIGHT_MARGIN_MULT": 2,
+
+  "RUN_LINTER": false,
+
+  "SYNTH_STRATEGY": "AREA 3",
+  "RT_MAX_LAYER": "met4",
+
+  "pdk::sky130A": {
+    "DIE_AREA": [0, 0, 400, 400]
+  }
+}
