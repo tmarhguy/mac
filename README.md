@@ -1,12 +1,18 @@
 # MAC
 
+
 ![status](https://img.shields.io/badge/status-RTL_verified-2ea043?style=for-the-badge)
 ![process](https://img.shields.io/badge/SkyWater-130nm-2563EB?style=for-the-badge)
 ![format](https://img.shields.io/badge/BF16→FP32_MAC-1D4ED8?style=for-the-badge)
 ![shuttle](https://img.shields.io/badge/TinyTapeout_07-0D9488?style=for-the-badge)
 ![license](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
 
-A **16-bit BFloat16 multiply–accumulate** unit with an **FP32 accumulator** — not a soft-IP black box, not an FPGA-first demo. Current AI needs optimized workload hardware; MAC is one of those blocks. It's a controller-style datapath built for low-precision ML on a legacy open PDK: BF16 in, FP32 partial sums out, hardened for **SkyWater 130 nm** and targeted at **TinyTapeout 07**.
+A **16-bit BFloat16 multiply–accumulate** unit with an **FP32 accumulator**. Current AI needs optimized workload hardware; MAC is one of those blocks. It's a controller-style datapath built for low-precision ML on a legacy open PDK: BF16 in, FP32 partial sums out, hardened for **SkyWater 130 nm** and targeted at **TinyTapeout 07**.
+
+<p align="center">
+  <img src="media/mac_core_preview.png" alt="mac_core hardened layout on Sky130 (LibreLane GDS preview)" width="50%" />
+</p>
+
 
 The core is a **2-stage pipeline** (`Mul` → `Acc`) behind a **4-cycle streaming bus** over TinyTapeout's 8-bit `ui_in` pin budget. RTL is verified in cocotb; next milestone is **OpenLane / LibreLane hardening** — cross-verified for timing closure → GDSII → shuttle submission. The [design journal](log/) holds the motivation; [docs/](docs/) holds the engineering detail.
 
@@ -39,13 +45,18 @@ Details, screenshots, and methodology: [test/README.md](test/README.md).
 
 ---
 
-## Harden
+## Harden (LibreLane)
+
+Local ASIC hardening with LibreLane — **start here** before Tiny Tapeout shuttle work:
 
 ```bash
-make harden
+make librelane-check   # one-time Docker + PDK smoke test
+make librelane         # full GDS for mac_core
 ```
 
-OpenLane via Docker today; LibreLane on the roadmap. Prerequisites and flow notes: [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
+Full learning guide: [docs/LIBRELANE.md](docs/LIBRELANE.md).
+
+Tiny Tapeout CI (`gds` workflow) is wired for later shuttle submission; local flow uses `librelane/*.json` configs instead of `tt_tool.py`.
 
 ---
 
@@ -54,6 +65,7 @@ OpenLane via Docker today; LibreLane on the roadmap. Prerequisites and flow note
 | | |
 |---|---|
 | Architecture, protocol, pipeline | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| **LibreLane hardening (local GDS)** | [docs/LIBRELANE.md](docs/LIBRELANE.md) |
 | Formats, pins, PPA | [docs/SPECS.md](docs/SPECS.md) |
 | Verification strategy | [docs/VERIFICATION.md](docs/VERIFICATION.md) |
 | Build journal | [log/](log/) |
