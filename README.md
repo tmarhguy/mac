@@ -1,4 +1,4 @@
-# MAC
+# 16-Bit MAC Unit for ML Acceleration
 
 
 ![status](https://img.shields.io/badge/status-RTL_verified-2ea043?style=for-the-badge)
