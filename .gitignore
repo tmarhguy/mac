@@ -1,1 +1,13 @@
-/test/__pycache__
+.DS_Store
+.idea
+.vscode
+*.vcd
+runs
+tt_submission
+tt/
+src/user_config.tcl
+src/pin_order.cfg
+test/sim_build
+test/__pycache__
+test/results.xml
+test/gate_level_netlist.v
