@@ -24,7 +24,7 @@ def float_to_bf16(f):
 
 
 async def reset_core(dut):
-    clock = Clock(dut.clk, 20, unit="ns")
+    clock = Clock(dut.clk, 20, units="ns")
     cocotb.start_soon(clock.start())
 
     dut.rst_n.value = 0

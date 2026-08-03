@@ -32,10 +32,15 @@ def int_to_float(i):
 # Testbench
 # ==============================================================================
 
+def mac(dut):
+    """User module under the Tiny Tapeout testbench wrapper."""
+    return dut.user_project
+
+
 @cocotb.test()
 async def test_reset(dut):
     """Basic reset test"""
-    clock = Clock(dut.clk, 20, unit="ns") # 50 MHz
+    clock = Clock(dut.clk, 20, units="ns") # 50 MHz
     cocotb.start_soon(clock.start())
     
     dut.rst_n.value = 0
@@ -51,7 +56,7 @@ async def test_reset(dut):
 @cocotb.test()
 async def test_bf16_mac_simple(dut):
     """Test simple BF16 accumulation: 1.0 * 2.0 + 1.5 * 2.0"""
-    clock = Clock(dut.clk, 20, unit="ns")
+    clock = Clock(dut.clk, 20, units="ns")
     cocotb.start_soon(clock.start())
     
     # Reset
@@ -131,7 +136,7 @@ async def test_bf16_mac_simple(dut):
     
     # Simple polling for correct phases
     for i in range(4):
-        state = int(dut.state_cnt.value)
+        state = int(mac(dut).state_cnt.value)
         lo_byte = int(dut.uo_out.value)
         hi_byte = int(dut.uio_out.value)
         
@@ -157,7 +162,7 @@ async def test_bf16_mac_simple(dut):
 @cocotb.test()
 async def test_random_1000_bf16(dut):
     """1000 Random MAC operations"""
-    clock = Clock(dut.clk, 20, unit="ns")
+    clock = Clock(dut.clk, 20, units="ns")
     cocotb.start_soon(clock.start())
     
     dut.rst_n.value = 0
@@ -204,7 +209,7 @@ async def test_random_1000_bf16(dut):
     
     # Capture stable result
     for _ in range(4):
-        state = int(dut.state_cnt.value)
+        state = int(mac(dut).state_cnt.value)
         val = int(dut.uo_out.value) | (int(dut.uio_out.value) << 8)
         if state < 2: raw_val_low = val
         else: raw_val_high = val

@@ -1,0 +1,19 @@
+# Cocotb Makefile for mac_core unit tests
+
+SIM ?= icarus
+TOPLEVEL_LANG ?= verilog
+SRC_DIR = $(PWD)/../src
+
+SIM_BUILD = sim_build/core
+VERILOG_SOURCES += $(SRC_DIR)/mac_core.sv
+VERILOG_SOURCES += $(PWD)/tb_mac_core.v
+COMPILE_ARGS += -I$(SRC_DIR)
+COMPILE_ARGS += -g2012
+
+TOPLEVEL = tb_mac_core
+MODULE = test_mac_core
+
+include $(shell cocotb-config --makefiles)/Makefile.sim
+
+clean::
+	rm -rf sim_build/core results.xml tb_mac_core.vcd __pycache__
