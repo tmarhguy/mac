@@ -1,4 +1,4 @@
-.PHONY: all test lint librelane librelane-check librelane-wrapper librelane-klayout librelane-openroad view-gds view-gds-preview clean
+.PHONY: all test lint librelane librelane-check librelane-wrapper librelane-klayout librelane-openroad view-gds view-gds-preview docs docs-clean docs-open clean
 
 LL := python3 -m librelane --docker-no-tty --dockerized --pdk sky130A
 LL_PATH := $(HOME)/Library/Python/3.9/bin
@@ -40,6 +40,17 @@ view-gds:
 
 view-gds-preview:
 	python3 scripts/view_gds.py --png-only
+
+# --- Technical Reference Manual (Asciidoctor, SeaLion-style) ---
+
+docs:
+	bash scripts/build-docs.sh
+
+docs-clean:
+	rm -rf build/docs
+
+docs-open: docs
+	python3 -m http.server --directory build/docs 8000
 
 clean:
 	rm -rf test/sim_build test/__pycache__ test/results.xml test/tb.vcd runs
