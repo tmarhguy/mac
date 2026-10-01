@@ -1,11 +1,13 @@
 # 16-Bit MAC Unit for ML Acceleration
 
 
-![status](https://img.shields.io/badge/status-RTL_verified-2ea043?style=for-the-badge)
-![process](https://img.shields.io/badge/SkyWater-130nm-2563EB?style=for-the-badge)
-![format](https://img.shields.io/badge/BF16→FP32_MAC-1D4ED8?style=for-the-badge)
-![shuttle](https://img.shields.io/badge/TinyTapeout_07-0D9488?style=for-the-badge)
-![license](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
+<p align="center">
+  <img src="https://img.shields.io/badge/status-RTL_verified-2ea043?style=for-the-badge" alt="status" />
+  <img src="https://img.shields.io/badge/SkyWater-130nm-2563EB?style=for-the-badge" alt="process" />
+  <img src="https://img.shields.io/badge/BF16→FP32_MAC-1D4ED8?style=for-the-badge" alt="format" />
+  <img src="https://img.shields.io/badge/TinyTapeout_07-0D9488?style=for-the-badge" alt="shuttle" />
+  <img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" alt="license" />
+</p>
 
 A **16-bit BFloat16 multiply–accumulate** unit with an **FP32 accumulator**. Current AI needs optimized workload hardware; MAC is one of those blocks. It's a controller-style datapath built for low-precision ML on a legacy open PDK: BF16 in, FP32 partial sums out, hardened for **SkyWater 130 nm** and targeted at **TinyTapeout 07**.
 
@@ -13,6 +15,10 @@ A **16-bit BFloat16 multiply–accumulate** unit with an **FP32 accumulator**. C
   <img src="media/mac_core_preview.png" alt="mac_core hardened layout on Sky130 (LibreLane GDS preview)" width="50%" />
 </p>
 
+<p align="center">
+  <a href="https://tmarhguy.github.io/mac/"><img alt="Read the Docs" src="https://img.shields.io/badge/Read_the_Docs-tmarhguy.github.io%2Fmac-1D4ED8?style=for-the-badge" /></a>
+  <a href="https://tmarhguy.com"><img alt="tmarhguy.com" src="https://img.shields.io/badge/tmarhguy.com-0D9488?style=for-the-badge" /></a>
+</p>
 
 The core is a **2-stage pipeline** (`Mul` → `Acc`) behind a **4-cycle streaming bus** over TinyTapeout's 8-bit `ui_in` pin budget. RTL is verified in cocotb; next milestone is **OpenLane / LibreLane hardening** — cross-verified for timing closure → GDSII → shuttle submission. The [design journal](log/) holds the motivation; [docs/](docs/) holds the engineering detail.
 
@@ -69,6 +75,18 @@ Tiny Tapeout CI (`gds` workflow) is wired for later shuttle submission; local fl
 | Formats, pins, PPA | [docs/SPECS.md](docs/SPECS.md) |
 | Verification strategy | [docs/VERIFICATION.md](docs/VERIFICATION.md) |
 | Build journal | [log/](log/) |
+
+---
+
+## Documentation
+
+Detailed architecture, interfaces, verification, and hardening detail is available in the [Technical Reference Manual](https://tmarhguy.github.io/mac/).
+The manual source lives in [`docs/index.adoc`](docs/index.adoc); build the static site locally with `make docs` (requires Asciidoctor).
+
+```bash
+make docs       # builds build/docs/index.html
+make docs-open  # serve at http://localhost:8000
+```
 
 ---
 
