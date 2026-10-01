@@ -1,0 +1,59 @@
+[#programming-model]
+== Programming Model
+
+How to drive the system: the per-MAC sequence, output reconstruction,
+and the accumulation pattern used for dot products.
+
+=== Drive sequence
+
+. Assert `rst_n` low for several cycles, then release.
+. Hold `ena` high during normal operation.
+. Stream four bytes per MAC: A low, A high, B low, B high.
+. Read `uo_out` / `uio_out` while the counter runs; reconstruct
+the 32-bit FP32 result from the low and high 16-bit phases.
+
+[source,bash]
+----
+# Pseudocode for one MAC (A, B are BF16 halfwords)
+drive(ui_in = A[7:0])    # state_cnt 0
+drive(ui_in = A[15:8])   # state_cnt 1
+drive(ui_in = B[7:0])    # state_cnt 2
+drive(ui_in = B[15:8])   # state_cnt 3 -> compute_trigger
+lo = {uio_out, uo_out}   # while state_cnt[1] == 0
+hi = {uio_out, uo_out}   # while state_cnt[1] == 1
+result_fp32 = {hi, lo}
+----
+
+Set `ena` high throughout; the free-running counter advances only
+under `ena`. Assert `rst_n` low to clear the accumulator between
+independent dot products.
+
+=== Accumulation pattern
+
+The wrapper ties `clr_acc` low, so every triggered MAC adds into
+`acc_reg`. A dot product is a stream of MACs without reset:
+
+[source,text]
+----
+rst_n pulse -> acc = 0
+MAC(1.0, 2.0) -> acc = 2.0
+MAC(1.5, 2.0) -> acc = 5.0
+read {hi, lo} -> 0x40A00000 (5.0 in FP32)
+----
+
+This `1.0×2.0 + 1.5×2.0` chain is the first non-reset check in the
+testbench (see <<verification,Verification>>).
+
+TIP: When a result surprises you, check phase alignment first.
+Reading the high word during `state_cnt[1] == 0` (or vice versa)
+silently swaps halves. Most surprises are bus phasing, not arithmetic.
+
+=== Timing model
+
+* Core latency: 2 cycles (Mul → Acc).
+* Pin throughput: 1 MAC / 4 cycles (streaming bound, not logic bound).
+* Result availability: operation N commits to `result_buffer` when
+`valid` pulses, readable during operation N+1's window.
+
+Never assume the result is ready in the same 4-cycle window that
+triggered it; pipeline it like any 2-stage datapath.

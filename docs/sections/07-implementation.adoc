@@ -1,0 +1,112 @@
+[#implementation]
+== Implementation
+
+Hardening layout and signoff rules.
+`docs/SPECS.md` is normative for targets; `docs/LIBRELANE.md` is
+normative for the local flow; this chapter summarizes both and states
+the invariants the flow enforces.
+
+=== Targets
+
+[source,text]
+----
+Process:  SkyWater 130 nm (sky130_fd_sc_hd, core 1.8 V)
+Clock:    50 MHz (period 20 ns)
+Die:      400 x 400 um first pass (mac_core.json); shrink after area known
+Tile:     1x1 TinyTapeout (increase only on area failure)
+----
+
+`info.yaml` pins the shuttle contract: `top_module tt_um_tensor_mac`,
+`clock_hz 50000000`, `tiles 1x1`, sources `tt_um_tensor_mac.v` +
+`mac_core.sv`, and the `ui/uo/uio` pinout tables duplicated in
+<<interfaces,Interfaces>>.
+
+=== Hardening flow
+
+LibreLane is a staged ASIC flow; TinyTapeout tooling is not used locally:
+
+[source,text]
+----
+Verilog RTL
+  -> Synthesis (Yosys, SV-aware for mac_core.sv)
+  -> Floorplan + PDN
+  -> Placement
+  -> CTS
+  -> Routing
+  -> Signoff (DRC / LVS / STA)
+  -> GDSII
+----
+
+Two configs are provided:
+
+.Configs (`librelane/`)
+[cols="1,1,2",options="header"]
+|===
+| Config | Top module | Use
+
+| `mac_core.json`
+| `mac_core`
+| Start here — smaller, pure datapath
+
+| `tt_um_tensor_mac.json`
+| `tt_um_tensor_mac`
+| Full TinyTapeout wrapper + streaming bus (later)
+|===
+
+=== Running the flow
+
+[source,bash]
+----
+make librelane-check   # one-time Docker + PDK smoke test
+make librelane         # full GDS for mac_core -> runs/mac/
+make librelane-wrapper # full wrapper (when the core closes)
+make view-gds          # KLayout app if installed, else PNG preview
+----
+
+Outputs land in `runs/mac/`:
+
+[cols="1,2",options="header"]
+|===
+| Path | Contents
+
+| `runs/mac/final/gds/mac_core.gds`
+| Layout for KLayout
+
+| `runs/mac/final/verilog/mac_core.v`
+| Gate-level netlist (feeds `make gl-test` / `GATES=yes` regression)
+
+| `runs/mac/final/metrics.csv`
+| Area, cells, timing summary
+
+| `runs/mac/logs/`
+| Per-step logs (read these when something fails)
+|===
+
+=== Config knobs (`mac_core.json`)
+
+[cols="1,1,2",options="header"]
+|===
+| Variable | Value | Meaning
+
+| `CLOCK_PERIOD`
+| `20`
+| 50 MHz target (ns); raise to `25` if timing fails
+
+| `FP_CORE_UTIL`
+| `40`
+| Core utilization % — lower = easier routing
+
+| `PL_TARGET_DENSITY`
+| `0.45`
+| Placer density — raise toward `0.6-0.7` on GPL-0302
+
+| `DIE_AREA`
+| `400x400 um`
+| Generous first pass; shrink after area known
+|===
+
+WARNING: Never hand-edit generated GDS or the gate-level netlist.
+Tune the JSON knobs and re-run; the flow is the only writer that
+preserves DRC / LVS / STA invariants. `mac_core.sv` uses SystemVerilog
+(`logic`, `always_ff`) — on SV synthesis errors check
+`runs/mac/logs/synthesis/yosys.log` first.

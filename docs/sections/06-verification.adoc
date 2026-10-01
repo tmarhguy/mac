@@ -1,0 +1,75 @@
+[#verification]
+== Verification
+
+How the project proves the MAC is correct — and how to re-run
+that proof locally.
+
+=== Golden model
+
+An intentionally straightforward Python model computes the expected
+answer for every stimulus: BF16 truncation on inputs, FP32 accumulation
+reference, relaxed tolerance for precision loss. Every RTL result must
+agree with it:
+
+* reset clears all registers and output buffers
+* zero inputs: `0 × N = 0`
+* identity: `1 × N = N`, sign-flip handling
+* chained accumulation: `1.0×2.0 + 1.5×2.0`
+* 1,000 random BF16 vectors uniform in `[-2.0, 2.0]`
+
+IMPORTANT: No RTL change lands without golden-model agreement.
+Simulation answers "does the logic work?"; the P&R flow answers
+"does it close on silicon?" (see <<implementation,Implementation>>).
+
+=== Evidence
+
+.Test run — cocotb driving the streaming bus
+image::test_run.png[Cocotb test run,align=center,width=560]
+
+.Passing suite — reset, chain, and 1,000 random vectors
+image::test_passed.png[Passing MAC test suite,align=center,width=560]
+
+=== Running the gates
+
+[source,bash]
+----
+cd test && make          # Linux / macOS
+cd test; .\run_test.ps1  # Windows
+----
+
+Expected output:
+
+[source,text]
+----
+test_mac.test_reset                 PASS
+test_mac.test_bf16_mac_simple       PASS
+test_mac.test_random_1000_bf16      PASS
+----
+
+This is the same gate CI runs. Unit stimulus lives in `test/test_mac.py`
+and `test/test_mac_core.py`; benches in `test/tb.v` and
+`test/tb_mac_core.v`. Details, screenshots, and methodology:
+`test/README.md`.
+
+.Tools
+[cols="1,2",options="header"]
+|===
+| Tool | Purpose
+
+| Icarus Verilog
+| Event-driven Verilog simulator
+
+| cocotb
+| Python testbench framework driving the pseudo-SPI stream
+
+| pytest
+| Test runner and reporting
+
+| NumPy
+| Numerical reference generation
+|===
+
+TIP: When adding arithmetic, add the golden-model comparison first.
+A failing reference test is the specification; a passing one is the proof.
+The suite targets full functional coverage of the pipeline control
+plus meaningful arithmetic coverage over standard ML ranges.

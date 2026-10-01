@@ -1,0 +1,42 @@
+[#limitations]
+== Known Limitations
+
+Honest boundaries: what the system is, and what it is not.
+This chapter overrides any optimistic reading of earlier chapters.
+
+=== What is real today
+
+* RTL for `mac_core` (BF16 multiply → FP32 accumulate, NaN/Inf/zero
+handling, sticky overflow) and `tt_um_tensor_mac` (4-cycle stream,
+2-phase result mux).
+* cocotb proof: reset, `1.0×2.0 + 1.5×2.0` chain, and 1,000 random
+BF16 vectors against a Python golden model.
+* LibreLane configs (`mac_core.json`, `tt_um_tensor_mac.json`) and
+a documented local hardening path (`make librelane-check`, `make librelane`).
+* TinyTapeout contract in `info.yaml` (50 MHz, 1x1 tile, pinout).
+
+=== What is explicitly not here
+
+* Closed GDS: no `runs/` directory exists yet — timing, DRC, and LVS
+closure is the next milestone, not a completed result.
+* Measured silicon PPA: area and power are estimates until
+`runs/mac/final/metrics.csv` exists (`TBD (unmeasured)`).
+* Gate-level regression: `make gl-test` requires a PDK netlist from
+a harden run that has not happened yet.
+* External hardware: none required; the streaming interface uses only
+dedicated TinyTapeout I/O pins.
+
+=== Limits to design around
+
+* I/O is the bottleneck by design: 1 MAC / 4 cycles at the pins
+while the core could retire faster. That is a shuttle constraint,
+not an architecture mistake.
+* Precision is BF16 by design: FP32-range exponents, ~3-decimal-digit
+mantissas, accumulator-only FP32. Workloads needing FP32 inputs do
+not belong here.
+* `clr_acc` is tied low in the wrapper: the only way to start a fresh
+dot product is `rst_n`. Streaming a new vector without reset folds it
+into the previous sum.
+* Built alongside https://github.com/tmarhguy/tomato[Tomato], which taught
+transistor-to-ISA thinking; MAC applies that instinct to an inference
+block — see `log/2026-08-03 - Reassessing Mac for optimization.md`.

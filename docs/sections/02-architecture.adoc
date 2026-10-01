@@ -1,0 +1,71 @@
+[#architecture]
+== Architecture
+
+System overview: what the pieces are, how operands flow in,
+how results flow out, and where each piece lives in the tree.
+
+=== System overview
+
+The two paths are deliberately asymmetric:
+input is pin-bound and streaming; the core itself is a fast
+2-stage pipeline.
+
+[source,text]
+----
+ui_in (8-bit, 4 cycles)
+  -> input buffers (operand_a, operand_b)
+  -> mac_core S1: BF16 multiply -> product_fp32
+  -> mac_core S2: FP32 accumulate -> acc_reg
+  -> result_buffer -> uo_out / uio_out (2 phases)
+----
+
+A 4-cycle counter (`state_cnt`) owns the asymmetry:
+four input bytes per MAC at the pins, two output phases for
+the 32-bit result. The core latency is 2 cycles; the pin
+throughput is 1 MAC / 4 cycles.
+
+=== Pipeline stages
+
+[source,text]
+----
+Stage 1 (Mul):  a[15:0], b[15:0] (BF16)
+                  -> sign XOR, exp add - 127, 8x8 mantissa
+                  -> product_fp32 (FP32) + valid_s1
+
+Stage 2 (Acc):  product_fp32 + acc_reg (FP32)
+                  -> align, add/sub, normalize (highest_bit_pos)
+                  -> next_acc -> acc_reg + valid
+----
+
+Splitting multiply and accumulate buys a clean 20 ns budget
+per phase at the 50 MHz target, instead of one giant
+combinational MAC through the 32-bit adder and normalization path.
+
+=== Module map
+
+.Modules and their responsibilities
+[cols="1,2,1",options="header"]
+|===
+| Module | Owns | Stage
+
+| `mac_core`
+| BF16 multiply, FP32 adder, `acc_reg`, `valid` / `overflow`
+| datapath
+
+| `tt_um_tensor_mac`
+| 4-cycle streaming controller, input buffers, `result_buffer`,
+output mux, `uio_oe = 0xFF`
+| interface
+|===
+
+NOTE: Every module named above runs in this tree and is covered by
+the verification gates in <<verification,Verification>> —
+see <<limitations,Known Limitations>> for honest boundaries.
+
+=== Further reading
+
+* `docs/ARCHITECTURE.md` — pipeline detail and I/O tables
+* `docs/SPECS.md` — formats, pins, PPA targets
+* `src/mac_core.sv` — Stage 1 / Stage 2 implementation
+* `src/tt_um_tensor_mac.v` — streaming controller
+* <<design,Design>> — arithmetic behind each box above

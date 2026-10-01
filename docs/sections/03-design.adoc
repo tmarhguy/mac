@@ -1,0 +1,96 @@
+[#design]
+== Design
+
+Arithmetic data structures and transformations.
+This is the conceptual companion to the pin-level detail in
+<<interfaces,Interfaces>> and the byte-level signoff in
+<<implementation,Implementation>>.
+
+=== Number formats
+
+BF16 keeps FP32's 8-bit exponent — same dynamic range, less silicon.
+The accumulator stays FP32 so long dot products do not collapse
+on precision.
+
+.BF16 input (16 bits)
+[cols="1,1,2",options="header"]
+|===
+| Bits | Field | Notes
+
+| 15
+| sign
+| `0` = positive, `1` = negative
+
+| 14:7
+| exponent
+| 8-bit, bias 127
+
+| 6:0
+| mantissa
+| 7-bit explicit, 1 implied (`{1'b1, a[6:0]}`)
+|===
+
+.FP32 accumulator (32 bits)
+[cols="1,1,2",options="header"]
+|===
+| Bits | Field | Notes
+
+| 31
+| sign
+| `0` = positive, `1` = negative
+
+| 30:23
+| exponent
+| 8-bit, bias 127
+
+| 22:0
+| mantissa
+| 23-bit explicit, 1 implied
+|===
+
+=== Stage 1: BF16 multiply
+
+[source,text]
+----
+new_sign = a[15] ^ b[15]
+exp_sum  = a[14:7] + b[14:7]
+ma, mb   = {1'b1, a[6:0]}, {1'b1, b[6:0]}
+m_prod   = ma * mb            // 8x8 -> 16 bits
+final_exp = exp_sum - 127 (+1 if m_prod[15])
+product_fp32 = {new_sign, final_exp, {m_prod narrowed to 23 bits}}
+----
+
+Special cases, in priority order:
+
+* NaN in either input → FP32 QNaN `0x7FC00000`.
+* Inf × zero → QNaN; Inf otherwise → signed Inf.
+* Zero in either input → `0`.
+* Exponent overflow (`>= 255`) → signed Inf + `overflow_s1`.
+* Exponent underflow (`== 0` or carry out) → flush to zero.
+
+Denormals are flushed to zero on input; the product is promoted
+directly to FP32 format for the accumulator.
+
+WARNING: Query the `overflow` flag; it is sticky (`overflow | overflow_s1 |
+overflow_add`). It clears only on `rst_n` or `clr_acc`.
+
+=== Stage 2: FP32 accumulate
+
+[source,text]
+----
+sa, ea, ma = unpack(acc_reg)      // flush denormals to zero
+sb, eb, mb = unpack(product_fp32)
+align smaller mantissa by |ea - eb| (with 3 guard bits)
+m_sum = same-sign ? add : subtract larger-minus-smaller
+if m_sum[27]: renormalize right by 1, exp + 1
+else: shift left by highest_bit_pos(m_sum[26:0]), exp - shift
+next_acc = {s_res, e_res, m_sum narrowed}
+----
+
+NaN propagates; `Inf + -Inf` (opposite signs) yields QNaN;
+like-signed Inf wins directly. A zero `m_sum` returns `0`.
+Overflow on the carry path returns signed Inf + `overflow_add`.
+
+TIP: Think of Stage 1 as the tensor product, Stage 2 as the partial-sum
+accumulator, and `acc_reg` as the running dot-product state.
+`result` is a continuous assignment of `acc_reg`.

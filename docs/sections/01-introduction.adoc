@@ -1,0 +1,77 @@
+[#introduction]
+== Introduction
+
+This chapter defines what the system is, what this manual covers,
+and how to navigate the rest of the document.
+
+=== Purpose
+
+MAC is a 16-bit BFloat16 multiply–accumulate unit with an FP32
+accumulator, built for low-precision ML on a legacy open PDK.
+
+It computes `acc += A × B` where `A` and `B` are BF16 and `acc`
+is IEEE-754 single precision, so long dot products keep FP32
+dynamic range while the multiplier stays `8×8` instead of `11×11`.
+
+This manual is the engineering reference for that system.
+It records design intent, interfaces, verification strategy,
+hardening flow, and measured behaviour in one numbered document.
+
+The fastest way to see what the system is: the hardened-layout
+preview and links at the top of this manual.
+
+=== Scope
+
+The manual covers:
+
+* system architecture and pipeline (see <<architecture,Architecture>>)
+* arithmetic data structures and special cases (see <<design,Design>>)
+* streaming bus and pin interfaces (see <<interfaces,Interfaces>>)
+* the drive model (see <<programming-model,Programming Model>>)
+* correctness strategy (see <<verification,Verification>>)
+* hardening layout and signoff (see <<implementation,Implementation>>)
+* measured performance (see <<performance,Performance>>)
+* honest limits (see <<limitations,Known Limitations>>)
+
+It does not replace:
+
+* `README.md` — quick start and repository map
+* `docs/architecture.md`, `docs/specs.md`, `docs/verification.md`,
+`docs/librelane.md`, `docs/info.md` — Markdown authorities beside this manual
+* `log/` — build journal and motivation
+* module-level comments in `src/mac_core.sv` and `src/tt_um_tensor_mac.v`
+
+=== How to read this manual
+
+Read chapters in order the first time.
+Chapters 1–2 give context; chapters 3–5 give the working model;
+chapters 6–8 give the evidence that the system behaves as claimed.
+
+Each chapter is self-contained enough to be entered directly from the
+sidebar once the overview in <<architecture,Architecture>> is familiar.
+
+=== Conventions
+
+.Normal cross-reference and link usage
+* Internal references look like this: <<verification,Verification>>.
+* External links look like this: https://tinytapeout.com/[TinyTapeout],
+the shuttle target for this project.
+* Inline code uses monospace, e.g. `mac_core`, `tt_um_tensor_mac`, `ui_in`.
+* File paths are repository-relative, e.g. `src/mac_core.sv`.
+
+.List conventions
+* Unordered lists state properties or inventories.
+* Ordered lists state procedures where sequence matters:
+
+. Assert `rst_n` low, then release.
+. Stream four bytes per MAC.
+. Reconstruct the 32-bit result from the two 16-bit phases.
+
+NOTE: Honest status is a project rule.
+Roadmap items stay labelled roadmap; unverified claims stay out of
+this manual. Where a number has not been measured it is written
+`TBD (unmeasured)`.
+
+TIP: The sidebar on the left is collapsible.
+Select a chapter title to navigate; select its arrow control to
+expand or collapse its subsections without leaving the page.

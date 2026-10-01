@@ -1,0 +1,81 @@
+= MAC Technical Reference Manual
+:author: Tyrone Marhguy
+:doctype: book
+:toc: left
+:toclevels: 3
+:sectnums:
+:sectnumlevels: 3
+:icons: font
+:docinfo: shared
+:imagesdir: images
+:stem: latexmath
+:experimental:
+
+// Entry point for the static technical manual.
+// Add, remove, or reorder chapters by editing the include list below.
+// Each chapter lives in sections/ as NN-name.adoc with a level-1 (==) heading.
+
+[preface]
+== MAC at a glance
+
+A 16-bit BFloat16 multiply–accumulate unit with an FP32 accumulator.
+Current AI needs optimized workload hardware; MAC is one of those blocks.
+It is a controller-style datapath built for low-precision ML on a legacy
+open PDK: BF16 in, FP32 partial sums out, hardened for *SkyWater 130 nm*
+and targeted at *TinyTapeout 07*.
+
+.Demo — the hardened core on Sky130 (LibreLane GDS preview)
+image::mac_core_preview.png[MAC core hardened layout on Sky130,align=center,width=340]
+
+++++
+<div style="text-align:center; margin: 0.75rem 0;">
+<a href="https://tmarhguy.com" style="display:inline-block;background:#1D4ED8;color:#ffffff;font-size:20px;font-weight:700;padding:14px 36px;border-radius:10px;text-decoration:none;margin:6px;">Author Profile</a>
+<a href="https://github.com/tmarhguy/mac" style="display:inline-block;background:#24292f;color:#ffffff;font-size:20px;font-weight:700;padding:14px 36px;border-radius:10px;text-decoration:none;margin:6px;">GitHub Repository</a>
+</div>
+++++
+
+=== About this manual
+
+This is the detailed technical reference for the project.
+It is the companion to the concise, GitHub-facing `README.md`:
+
+* `README.md` — project identity, status, and quick start.
+* `docs/` (this manual) — architecture, interfaces, verification, and
+implementation detail in engineering-manual style.
+
+Conventions used throughout:
+
+* `monospace` marks commands, file paths, identifiers, and literals.
+* BF16 means 1 sign + 8 exponent + 7 mantissa bits; FP32 means IEEE-754
+single precision. Bit fields are written `a[15]`, `a[14:7]`, `a[6:0]`.
+* Unmeasured values are written as `TBD (unmeasured)` — never silently estimated.
+* Normative pin and format detail lives alongside this manual
+as Markdown (`docs/*.md`, `info.yaml`) and is linked, not duplicated.
+
+TIP: Start with <<introduction,Introduction>> for scope and reading order,
+then <<architecture,Architecture>> for the system overview.
+
+// Chapters — reorder freely. Filenames carry a numeric prefix only so
+// directory listings stay in reading order; the visible numbers come
+// from :sectnums:, not from filenames.
+//
+// Blank lines between the includes are significant: they terminate any
+// open block (e.g. a trailing list) in the previous file so the next
+// chapter heading is always parsed as a new section.
+include::sections/01-introduction.adoc[]
+
+include::sections/02-architecture.adoc[]
+
+include::sections/03-design.adoc[]
+
+include::sections/04-interfaces.adoc[]
+
+include::sections/05-programming-model.adoc[]
+
+include::sections/06-verification.adoc[]
+
+include::sections/07-implementation.adoc[]
+
+include::sections/08-performance.adoc[]
+
+include::sections/09-limitations.adoc[]

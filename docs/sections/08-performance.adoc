@@ -1,0 +1,71 @@
+[#performance]
+== Performance
+
+Measured behaviour only. Unmeasured values are `TBD (unmeasured)`.
+Every hardening change follows synthesize → place/route → measure →
+document.
+
+=== Throughput and latency
+
+[cols="1,1,2",options="header"]
+|===
+| Metric | Value | Notes
+
+| Throughput
+| 1 MAC / 4 cycles
+| Pin-bound by the 8-bit streaming bus, not the core
+
+| Latency
+| 2 cycles
+| Core pipeline (Mul → Acc)
+
+| Frequency
+| 50 MHz (20 ns)
+| Target; closes only when STA passes in `runs/mac/logs/`
+|===
+
+Throughput scales with pins, not logic: widening `ui_in` would raise
+MACs/cycle, but the TinyTapeout template fixes 8 input pins.
+
+=== Area and power
+
+[cols="1,1,2",options="header"]
+|===
+| Metric | Value | Notes
+
+| Area
+| ~0.10–0.12 mm² (`TBD (unmeasured)`)
+| Estimate for 1x1 tile; real number comes from `metrics.csv`
+
+| Dynamic power
+| ~10–20 mW @ 50 MHz (`TBD (unmeasured)`)
+| Simulation estimate only
+
+| Static power
+| < 1 mW (`TBD (unmeasured)`)
+| Sky130 HD leakage estimate
+|===
+
+Report area, cell count, and worst slack together from
+`runs/mac/final/metrics.csv` — size alone never justifies a change.
+Until the first `make librelane` closes, all silicon numbers above
+stay labelled estimates.
+
+=== Benchmarks
+
+[source,bash]
+----
+# RTL correctness (must stay green)
+cd test && make
+
+# Gate-level regression (needs PDK netlist from a harden run)
+make gl-test   # == cd test && make clean GATES=yes
+
+# Hardening + inspection
+make librelane
+make view-gds-preview
+----
+
+NOTE: Power or area numbers copied from another project do not
+belong here. If it was not measured in this tree, it is
+`TBD (unmeasured)`.
