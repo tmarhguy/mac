@@ -1,0 +1,28 @@
+{
+  "name": "MAC Unit",
+  "label": "Documentation",
+  "title": "A multiply-accumulate unit",
+  "description": "A hardware block that multiplies 16-bit brain-float numbers and adds them into a 32-bit total, laid out for SkyWater 130 nm.",
+  "url": "",
+  "image": "",
+  "about": "#about",
+  "repository": "https://github.com/tmarhguy/mac",
+  "website": "",
+  "source": "https://github.com/tmarhguy/mac/blob/main/docs/index.adoc",
+  "groups": {
+    "0": "Documentation",
+    "11": "Author"
+  },
+  "branch": "main",
+  "hero": {
+    "image": "images/mac_core_preview.png",
+    "alt": "MAC core hardened layout on Sky130",
+    "caption": "The hardened core on Sky130 (LibreLane GDS preview)"
+  },
+  "accent": "#9a3412",
+  "accentDark": "#fdba74",
+  "nested": [
+    "engineering-log"
+  ],
+  "logs": "log"
+}

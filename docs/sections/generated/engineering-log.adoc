@@ -1,0 +1,19 @@
+[#engineering-log]
+== Engineering log
+
+Each note below is the original project log, in chronological order.
+Open the arrow in the sidebar to jump to an entry.
+
+[#log-2026-08-03-reassessing-mac-for-optimization]
+=== 2026-08-03 — Reassessing MAC for optimization
+
+++++
+<div class="log-entry">
+<p><em>2026-08-03</em></p>
+<p>Over the last few months, I have read and worked on several other projects — the most important of them all being <strong>tomato</strong>: what if we replaced the conventional ALU in a computer with the topology adder — <code>mux(An, Bn, Cn), mux(An, Bn, Cn), carry_in select</code>? Tomato has been enormously enlightening and exciting to build!</p>
+<p>It was one thing to learn architecture and another to build it from transistor level up, and writing your own ISA and hex to run a custom program!</p>
+<p><strong>Back to the mac.</strong> Current AI needs an optimized workload machine, and the mac is one of them. I will work to tape this out among other important work to make this as exciting as possible for myself and anyone who's reading this far :)</p>
+<p>I will explore the fun LibreLane process for this MAC and cross-verify with rigor, so that when taped out it meets all timing requirements — and indeed MACs a number!</p>
+</div>
+++++
+

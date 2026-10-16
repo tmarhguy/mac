@@ -5,7 +5,9 @@
 :toclevels: 3
 :sectnums:
 :sectnumlevels: 3
-:icons: font
+:icons!:
+:stylesheet!:
+:webfonts!:
 :docinfo: shared
 :imagesdir: images
 :stem: latexmath
@@ -15,17 +17,15 @@
 // Add, remove, or reorder chapters by editing the include list below.
 // Each chapter lives in sections/ as NN-name.adoc with a level-1 (==) heading.
 
+[#overview]
 [preface]
-== MAC at a glance
+== A multiply-accumulate unit
 
-A 16-bit BFloat16 multiply–accumulate unit with an FP32 accumulator.
-Current AI needs optimized workload hardware; MAC is one of those blocks.
-It is a controller-style datapath built for low-precision ML on a legacy
-open PDK: BF16 in, FP32 partial sums out, hardened for *SkyWater 130 nm*
-and targeted at *TinyTapeout 07*.
+This block does one job: multiply two 16-bit brain-float numbers and add the product into a 32-bit floating-point total. That multiply-accumulate step is the inner loop of neural-network math. Brain float (BFloat16) keeps the range of a 32-bit float and throws away the extra precision. The layout targets the open SkyWater 130 nm process, for submission to Tiny Tapeout 7.
 
-.Demo — the hardened core on Sky130 (LibreLane GDS preview)
-image::mac_core_preview.png[MAC core hardened layout on Sky130,align=center,width=340]
+++++
+<!-- docs-hero -->
+++++
 
 ++++
 <div style="text-align:center; margin: 0.75rem 0;">
@@ -79,3 +79,10 @@ include::sections/07-implementation.adoc[]
 include::sections/08-performance.adoc[]
 
 include::sections/09-limitations.adoc[]
+
+ifdef::has-logs[]
+include::sections/generated/engineering-log.adoc[]
+
+endif::[]
+
+include::theme/about.adoc[]

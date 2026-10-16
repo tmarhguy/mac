@@ -6,10 +6,12 @@
 #   Other:  gem install asciidoctor
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 SRC="$REPO_ROOT/docs/index.adoc"
 OUT_DIR="$REPO_ROOT/build/docs"
 OUT_FILE="$OUT_DIR/index.html"
+
+cd "$REPO_ROOT"
 
 if ! command -v asciidoctor >/dev/null 2>&1; then
   echo "error: asciidoctor not found on PATH." >&2
@@ -25,48 +27,70 @@ if [ ! -f "$SRC" ]; then
   exit 1
 fi
 
+rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR/theme" "$OUT_DIR/images"
 
-# Version stamp, RISC-V-spec style ("Version <sha>, <date>" under the
-# title). Derived from git at build time; falls back to the build date
-# outside a git checkout. Pure Asciidoctor revision attributes.
+python3 "$REPO_ROOT/scripts/ingest-logs.py"
+if [ -d "$REPO_ROOT/docs/diagrams" ]; then
+  python3 "$REPO_ROOT/scripts/render-docs-diagrams.py"
+fi
+if [ -d "$REPO_ROOT/docs/charts" ]; then
+  python3 "$REPO_ROOT/scripts/render-docs-charts.py"
+fi
+python3 "$REPO_ROOT/scripts/prepare-docs.py" head
+
 REVDATE="$(git -C "$REPO_ROOT" log -1 --format=%cs 2>/dev/null || date +%F)"
 REVNUM="$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo unversioned)"
 
-# Single-page manual. docinfo=shared + docinfodir pulls docs/theme/docinfo.html
-# (CSS/JS injection) without editing generated HTML afterwards.
-asciidoctor \
-  --backend html5 \
-  --safe-mode safe \
-  --attribute docinfo=shared \
-  --attribute docinfodir="$REPO_ROOT/docs/theme" \
-  --attribute revdate="$REVDATE" \
-  --attribute revnumber="$REVNUM" \
-  --out-file "$OUT_FILE" \
-  "$SRC"
+DOCINFO_DIR="$(mktemp -d "$REPO_ROOT/docs/theme/.docinfo.XXXXXX")"
+trap 'rm -rf "$DOCINFO_DIR"' EXIT
+cp "$OUT_DIR/theme/docinfo.html" "$DOCINFO_DIR/docinfo.html"
 
-# Theme assets live next to the HTML so relative paths in docinfo.html resolve.
-cp "$REPO_ROOT/docs/theme/docs.css" "$OUT_DIR/theme/docs.css"
-cp "$REPO_ROOT/docs/theme/nav.js"   "$OUT_DIR/theme/nav.js"
-cp "$REPO_ROOT/docs/theme/search.js" "$OUT_DIR/theme/search.js"
+HAS_LOGS=0
+if [ -f "$REPO_ROOT/docs/sections/generated/engineering-log.adoc" ]; then
+  HAS_LOGS=1
+fi
 
-# Figures referenced via :imagesdir: images.
+if [ "$HAS_LOGS" -eq 1 ]; then
+  asciidoctor \
+    --failure-level WARN \
+    --backend html5 \
+    --safe-mode safe \
+    --attribute docinfo=shared \
+    --attribute docinfodir="$DOCINFO_DIR" \
+    --attribute revdate="$REVDATE" \
+    --attribute revnumber="$REVNUM" \
+    --attribute has-logs \
+    --out-file "$OUT_FILE" \
+    "$SRC"
+else
+  asciidoctor \
+    --failure-level WARN \
+    --backend html5 \
+    --safe-mode safe \
+    --attribute docinfo=shared \
+    --attribute docinfodir="$DOCINFO_DIR" \
+    --attribute revdate="$REVDATE" \
+    --attribute revnumber="$REVNUM" \
+    --out-file "$OUT_FILE" \
+    "$SRC"
+fi
+
+for asset in docs.css nav.js search.js; do
+  cp "$REPO_ROOT/docs/theme/$asset" "$OUT_DIR/theme/$asset"
+done
+
 if [ -d "$REPO_ROOT/docs/images" ]; then
   cp -R "$REPO_ROOT/docs/images/." "$OUT_DIR/images/"
 fi
-
-# Hero figure: single source of truth is media/mac_core_preview.png;
-# stage it next to the figures so image::mac_core_preview.png[] resolves.
-if [ -f "$REPO_ROOT/media/mac_core_preview.png" ]; then
-  cp "$REPO_ROOT/media/mac_core_preview.png" "$OUT_DIR/images/mac_core_preview.png"
+if [ -d "$REPO_ROOT/docs/assets" ]; then
+  cp "$REPO_ROOT/docs/assets/"*.* "$OUT_DIR/images/" 2>/dev/null || true
 fi
 
-# Verification evidence figures (used in the Verification chapter).
-if [ -f "$REPO_ROOT/media/test/test_run.png" ]; then
-  cp "$REPO_ROOT/media/test/test_run.png" "$OUT_DIR/images/test_run.png"
+python3 "$REPO_ROOT/scripts/prepare-docs.py" page
+if [ -f "$REPO_ROOT/docs/404.html" ]; then
+  python3 "$REPO_ROOT/scripts/prepare-docs.py" not-found
 fi
-if [ -f "$REPO_ROOT/media/test/test_passed.png" ]; then
-  cp "$REPO_ROOT/media/test/test_passed.png" "$OUT_DIR/images/test_passed.png"
-fi
+python3 "$REPO_ROOT/scripts/export-docs-template.py"
 
 echo "Built $OUT_FILE"

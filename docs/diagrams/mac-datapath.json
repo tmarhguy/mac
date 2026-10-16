@@ -1,0 +1,22 @@
+{
+  "title": "MAC datapath",
+  "subtitle": "BF16 multiply, then FP32 accumulate",
+  "rows": [
+    [
+      "Pin stream",
+      "Four 8-bit cycles carry operands A and B."
+    ],
+    [
+      "BF16 multiply",
+      "Stage 1 promotes the product to FP32."
+    ],
+    [
+      "FP32 accumulate",
+      "Stage 2 adds that product into the accumulator."
+    ],
+    [
+      "Result stream",
+      "The 32-bit result leaves in two output phases."
+    ]
+  ]
+}
